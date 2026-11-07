@@ -1,7 +1,8 @@
-
 # Python environment
 venv/
 .env
+
+# Python cache
 __pycache__/
 *.pyc
 
@@ -9,9 +10,13 @@ __pycache__/
 .vscode/
 .idea/
 
-# Operating system
+# Logs
+logs/
+
+# Trained models and videos
+models/*.zip
+videos/
+
+# OS files
 .DS_Store
 Thumbs.db
-
-# Training logs
-logs/
