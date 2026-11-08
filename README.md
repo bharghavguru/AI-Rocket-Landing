@@ -1,257 +1,375 @@
-# 🚀 AI Rocket Landing Simulator
+# PPO-Based Autonomous Landing Control
 
-An AI-powered rocket landing simulator built using **Reinforcement Learning (PPO)** and Gymnasium's LunarLander environment.
+An autonomous rocket landing simulation using **Proximal Policy Optimization (PPO)** and Reinforcement Learning in Gymnasium's LunarLander-v3 environment.
 
-This project explores how an AI agent learns to control a rocket, manage its movement, and achieve a safe landing through trial and error.
+This project explores how an AI agent learns to control a lunar lander through trial and error. It also investigates how custom reward shaping influences the agent's landing performance.
 
-The project also experiments with **Custom Reward Shaping** to understand how reward design influences an AI agent's learning and performance.
+## Project Overview
 
-## 🎯 Project Objectives
+The objective is to train an AI agent that can safely land a lunar lander by controlling its main engine and side engines.
 
-- Understand Reinforcement Learning through a practical simulation.
-- Train an AI agent using Proximal Policy Optimization (PPO).
-- Learn how an agent interacts with an environment through observations, actions, and rewards.
-- Implement custom reward shaping.
-- Compare the performance of original and custom-reward PPO models.
-- Visualize and analyze experimental results.
+The agent observes the environment, selects actions, receives rewards or penalties, and gradually improves its landing strategy through reinforcement learning.
 
-## 🛠️ Technologies Used
+**Environment:** Gymnasium LunarLander-v3  
+**Algorithm:** Proximal Policy Optimization (PPO)  
+**Framework:** Stable-Baselines3  
+**Language:** Python  
+**Training Device:** CPU
 
-- Python
-- Gymnasium
-- Stable-Baselines3
-- PyTorch
-- Matplotlib
-- Proximal Policy Optimization (PPO)
+## Objectives
 
-## 🧠 How It Works
+- Build an autonomous landing agent using Reinforcement Learning.
+- Train a baseline PPO model.
+- Implement custom reward shaping techniques.
+- Compare different reward functions under the same evaluation conditions.
+- Analyze how reward design affects learning performance.
 
-The project uses the LunarLander-v3 environment from Gymnasium.
+## Technologies Used
 
-The AI agent receives observations about the rocket's state and selects actions to control its movement.
+| Technology | Purpose |
+|---|---|
+| Python | Programming language |
+| Gymnasium | Reinforcement learning environment |
+| Stable-Baselines3 | PPO implementation |
+| PyTorch | Deep learning framework |
+| NumPy | Numerical operations |
+| Matplotlib | Performance visualization |
+| Box2D | Lunar lander physics simulation |
 
-**Observation space includes:**
-- Horizontal position
-- Vertical position
-- Horizontal velocity
-- Vertical velocity
-- Rocket angle
-- Angular velocity
-- Left leg contact
-- Right leg contact
+## How the System Works
 
-**Available actions:**
-- Do nothing
-- Fire left engine
-- Fire main engine
-- Fire right engine
+The project follows a reinforcement learning cycle:
 
-The PPO algorithm learns an effective landing strategy by interacting with the environment and receiving rewards.
+1. The agent observes the lander's current state.
+2. The PPO policy selects an action.
+3. The environment executes the action.
+4. The agent receives a reward based on its performance.
+5. The policy updates to improve future decisions.
 
-## 🏗️ Project Architecture
+### Reinforcement Learning Workflow
 
 ```text
-             LunarLander Environment
-                       |
-                       v
-                AI Agent (PPO)
-                       |
-                       v
-                 Observations
-                       |
-                       v
-                Policy Network
-                       |
-                       v
-                 Select Action
-                       |
-                       v
-              Execute Rocket Action
-                       |
-                       v
-                 Receive Reward
-                       |
-                       v
-                Update PPO Policy
-                       |
-                       v
-                 Repeat Training
+       Environment
+      (LunarLander)
+            |
+            v
+      Observe State
+            |
+            v
+       PPO Agent
+            |
+            v
+      Select Action
+            |
+            v
+     Execute Action
+            |
+            v
+     Receive Reward
+            |
+            v
+     Update Policy
+            |
+            v
+       Repeat Cycle
 ```
 
-## 🧪 Experiments
+## Environment Details
 
-### Experiment 1: Original PPO
+The LunarLander-v3 environment provides an eight-dimensional observation space.
 
-- Environment: LunarLander-v3
+| Observation | Description |
+|---|---|
+| x | Horizontal position |
+| y | Vertical position |
+| vx | Horizontal velocity |
+| vy | Vertical velocity |
+| Angle | Lander orientation |
+| Angular Velocity | Rotational speed |
+| Left Leg Contact | Left landing leg contact |
+| Right Leg Contact | Right landing leg contact |
+
+The agent has four possible discrete actions:
+
+| Action | Description |
+|---|---|
+| 0 | Do nothing |
+| 1 | Fire left orientation engine |
+| 2 | Fire main engine |
+| 3 | Fire right orientation engine |
+
+## Model Development
+
+Three PPO models were developed and evaluated.
+
+### 1. Original PPO Model
+
+The first model uses the standard LunarLander-v3 reward function without additional reward shaping.
+
+**Training configuration:**
+
 - Algorithm: PPO
-- Policy: MlpPolicy
-- Learning rate: 0.0003
-- Training timesteps: 500,000
-- Evaluation episodes: 20
+- Learning Rate: 0.0003
+- Timesteps: 500,000
+- Batch Size: 64
+- Steps per Update: 2048
+- Discount Factor: 0.99
+- Device: CPU
 
-### Experiment 2: Custom Reward Shaping
+This model acts as the baseline for comparing custom reward functions.
 
-A custom Gymnasium reward wrapper was implemented using potential-based reward shaping.
+### 2. Custom Reward V1
 
-The shaping function considers:
+The first custom reward experiment introduces potential-based reward shaping.
+
+The potential function considers:
 
 - Horizontal position
 - Horizontal velocity
 - Vertical velocity
-- Rocket angle
+- Lander angle
 - Angular velocity
 
-The original environment reward is retained and combined with the additional shaping reward.
+The potential function is:
 
-## 📊 Experimental Results
+\[
+\Phi(s)=-\left(
+|x|+0.5|v_x|+0.5|v_y|+
+0.3|\theta|+0.1|\omega|
+\right)
+\]
 
-Both models were evaluated using the original LunarLander environment over 20 episodes.
+The shaping reward is calculated as:
 
-| Metric | Original PPO | Custom Reward PPO |
-|---|---:|---:|
-| Average reward | 233.48 | 150.79 |
-| Episodes with reward ≥ 200 | 17/20 | 6/20 |
-| Threshold success rate | 85% | 30% |
+\[
+F(s,s')=\gamma\Phi(s')-\Phi(s)
+\]
+
+The final reward becomes:
+
+\[
+R'=R+F(s,s')
+\]
+
+The purpose is to encourage the agent to move towards a more stable landing state.
+
+### 3. Custom Reward V2
+
+The second experiment improves the potential function by introducing vertical position and landing-leg contact information.
+
+The potential function is:
+
+\[
+\Phi(s)=-E(s)+L(s)
+\]
+
+Where:
+
+\[
+E(s)=|x|+0.5|y|+0.5|v_x|+
+0.5|v_y|+0.3|\theta|+0.1|\omega|
+\]
+
+And:
+
+\[
+L(s)=0.5(\text{Left Leg}+\text{Right Leg})
+\]
+
+The shaping reward remains:
+
+\[
+F(s,s')=\gamma\Phi(s')-\Phi(s)
+\]
+
+The final reward is:
+
+\[
+R'=R+F(s,s')
+\]
+
+This experiment investigates whether including additional state information can improve the agent's learning performance.
+
+**Note:** The leg-contact bonus is a simple shaping signal. It does not independently guarantee a safe landing.
+
+## Experimental Evaluation
+
+All three models were evaluated over 20 episodes using identical environment reset seeds.
+
+The evaluation used the original LunarLander-v3 environment reward, allowing the models to be compared using the same reward scale.
+
+### Performance Results
+
+| Model | Average Reward | Standard Deviation | Episodes >= 200 |
+|---|---:|---:|---:|
+| Original PPO | 233.48 | 48.61 | 17/20 |
+| Custom Reward V1 | 150.79 | 90.65 | 6/20 |
+| Custom Reward V2 | 189.78 | 85.14 | 16/20 |
 
 ### Average Reward Comparison
 
-![Average Reward Comparison](results/average_reward.png)
+![Three Model Average Reward](results/three_model_average_reward.png)
 
-### Episode-wise Reward Comparison
+### Episode-wise Performance Comparison
 
-![Episode Reward Comparison](results/episode_comparison.png)
+![Episode Comparison](results/three_model_episode_comparison.png)
 
-### Key Observation
+### Benchmark Comparison
 
-The original PPO model performed better than the custom reward model in this experiment.
+![Benchmark Comparison](results/benchmark_comparison.png)
 
-This demonstrates that custom reward shaping does not automatically improve an agent's performance. Reward functions must be carefully designed and experimentally evaluated.
+## Experimental Analysis
 
-**Note:** An episode reward of 200 or more is used here as a benchmark, not as a direct measurement of physically verified safe landings.
+### Original PPO
 
-## 📁 Project Structure
+- Achieved the highest average reward of 233.48.
+- Reached the 200 reward benchmark in 17 out of 20 episodes.
+- Demonstrated the most consistent performance among the three models.
+
+### Custom Reward V1
+
+- Achieved an average reward of 150.79.
+- Reached the 200 reward benchmark in 6 out of 20 episodes.
+- Had the highest performance variability.
+
+### Custom Reward V2
+
+- Achieved an average reward of 189.78.
+- Improved considerably compared with Custom Reward V1.
+- Reached the 200 reward benchmark in 16 out of 20 episodes.
+- Still did not outperform the original PPO model in average reward.
+
+## Experimental Conclusion
+
+The experiments show that reward shaping can significantly influence reinforcement learning performance.
+
+Custom Reward V2 performed better than Custom Reward V1, increasing the average reward from 150.79 to 189.78.
+
+However, the original PPO model achieved the highest average reward of 233.48.
+
+This demonstrates an important reinforcement learning concept:
+
+**A more complex reward function does not automatically produce a better policy.**
+
+Reward shaping must be carefully designed and evaluated to ensure that additional incentives help rather than interfere with the agent's learning process.
+
+The results are based on one training run per model and 20 evaluation episodes, so further experiments with multiple training seeds are needed to establish more general conclusions.
+
+## Project Structure
 
 ```text
-AI-Rocket-Landing/
+PPO-Based-Autonomous-Landing-Control/
 │
 ├── main.py
 ├── train.py
 ├── evaluate.py
 ├── record_video.py
 │
+├── train_original.py
+├── evaluate_original.py
+│
 ├── custom_env.py
 ├── train_custom.py
+│
+├── custom_env_v2.py
+├── train_custom_v2.py
+│
 ├── compare_models.py
+├── compare_all_models.py
 ├── plot_comparison.py
+├── plot_all_models.py
 │
 ├── results/
-│   ├── average_reward.png
-│   └── episode_comparison.png
+│   ├── three_model_average_reward.png
+│   ├── three_model_episode_comparison.png
+│   └── benchmark_comparison.png
 │
 ├── models/
 ├── videos/
-│
 ├── requirements.txt
 ├── .gitignore
 └── README.md
 ```
 
-## ⚙️ Installation and Setup
+## Installation and Setup
 
-### 1. Clone the repository
+### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/bharghavguru/AI-Rocket-Landing.git
-cd AI-Rocket-Landing
+git clone https://github.com/bharghavguru/PPO-Based-Autonomous-Landing-Control.git
 ```
 
-### 2. Create a virtual environment
+```bash
+cd PPO-Based-Autonomous-Landing-Control
+```
+
+### 2. Create a Virtual Environment
 
 ```bash
 python -m venv venv
 ```
 
-### 3. Activate the environment
+### 3. Activate the Environment
 
-Windows:
+**Windows PowerShell:**
 
 ```powershell
-.\venv\Scripts\activate
+.\venv\Scripts\Activate.ps1
 ```
 
-### 4. Install dependencies
+### 4. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 5. Run the random baseline
-
-```bash
-python main.py
-```
-
-### 6. Train the original PPO model
+### 5. Train the Original PPO Model
 
 ```bash
 python train.py
 ```
 
-### 7. Evaluate the original model
-
-```bash
-python evaluate.py
-```
-
-### 8. Train the custom reward model
+### 6. Train Custom Reward V1
 
 ```bash
 python train_custom.py
 ```
 
-### 9. Compare both models
+### 7. Train Custom Reward V2
 
 ```bash
-python compare_models.py
+python train_custom_v2.py
 ```
 
-### 10. Generate result graphs
+### 8. Compare All Models
 
 ```bash
-pip install matplotlib
-python plot_comparison.py
+python compare_all_models.py
 ```
 
-**Note:** The trained model files are not included in the repository. Run the training scripts to generate them before evaluation. 
+### 9. Generate Performance Graphs
 
-## 🔮 Future Improvements
+```bash
+python plot_all_models.py
+```
 
-- Improve custom reward function design.
+## Future Improvements
+
+- Experiment with improved reward shaping strategies.
+- Evaluate models using multiple training seeds.
+- Analyze successful landings and crash rates separately.
+- Improve landing stability and fuel efficiency.
 - Experiment with different PPO hyperparameters.
-- Compare multiple reward shaping strategies.
-- Analyze landing success and crash rates separately.
-- Visualize the agent's landing behavior.
-- Explore additional Reinforcement Learning algorithms.
+- Explore alternative reinforcement learning algorithms.
 
-## 📚 Learning Outcomes
-
-Through this project, I explored:
-
-- Reinforcement Learning fundamentals.
-- Environment and agent interaction.
-- PPO algorithm and policy networks.
-- Reward functions and reward shaping.
-- Model training and evaluation.
-- Experimental comparison and visualization.
-
-## 👨‍💻 Author
+## Author
 
 **P.G.Gurubharghav**
 
-BE Computer Science and Engineering
+Third-Year Computer Science and Engineering Student
 
-GitHub: [@bharghavguru](https://github.com/bharghavguru)
+GitHub: [bharghavguru](https://github.com/bharghavguru)
 
 ---
 
-*Built as a hands-on learning project to explore Reinforcement Learning and AI through rocket landing simulation.*
+*This project is developed as a practical exploration of Reinforcement Learning, PPO, reward shaping, and autonomous control systems.*
